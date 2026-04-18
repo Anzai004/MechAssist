@@ -72,10 +72,22 @@ def predict_failure(type_grade, air_temp, process_temp, rpm, torque, twf, hdf, p
 def get_advisory(type_grade, air_temp, process_temp, rpm, torque, v_base, feed_base, depth_base):
     conditions = generate_cutting_conditions(v_base, feed_base, depth_base)
     results = []
+
     for mode, params in conditions.items():
+        # Compute physics features
+        cutting_power = torque * (rpm * 2 * np.pi / 60)
+        temp_delta = process_temp - air_temp
+        tool_wear_est = 108  # dataset mean as proxy
+
+        # Compute failure flags from AI4I thresholds
+        twf = int(tool_wear_est > 200 and 3.8 <= torque <= 9)
+        hdf = int(temp_delta < 8.6)
+        pwf = int(cutting_power < 3500 or cutting_power > 9000)
+        osf = int(torque > 6000 * 0.00001 * tool_wear_est)
+
         failure = predict_failure(
             type_grade, air_temp, process_temp,
-            rpm, torque, 0, 0, 0, 0
+            rpm, torque, twf, hdf, pwf, osf
         )
         results.append({
             'Mode': mode,
