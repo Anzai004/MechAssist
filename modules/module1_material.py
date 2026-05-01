@@ -39,10 +39,28 @@ def load_models():
     scaler = joblib.load(SCALER_PATH)
     return km, scaler
 
+def get_elbow_data(k_range=range(1, 11)):
+    df = load_data()
+    km, scaler = load_models()
+    X_scaled = scaler.transform(df[FEATURES])
+    inertias = []
+    for k in k_range:
+        m = KMeans(n_clusters=k, random_state=42, n_init=10)
+        m.fit(X_scaled)
+        inertias.append(m.inertia_)
+    return list(k_range), inertias
+
 # ── Failure Concern ────────────────────────────────────────────────────────
-def get_failure_concern(bhn):
+def get_failure_concern(bhn, sy=None):
     if pd.isna(bhn):
-        return "Unknown"
+        if sy is None:
+            return "Unknown"
+        elif sy > 600:
+            return "Fracture Risk"
+        elif sy > 300:
+            return "Fatigue Risk"
+        else:
+            return "Creep Risk"
     elif bhn > 300:
         return "Fracture Risk"
     elif bhn > 200:
@@ -77,6 +95,6 @@ def recommend_materials(min_yield, max_density, min_elongation, n=3):
             'Density (kg/m³)': row['Ro'],
             'Elongation (%)': row['A5'],
             'Cluster': int(row['Cluster']),
-            'Failure Concern': get_failure_concern(row['Bhn'])
+            'Failure Concern': get_failure_concern(row['Bhn'], row['Sy'])
         })
     return results
