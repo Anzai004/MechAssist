@@ -1,32 +1,23 @@
 import numpy as np
 
-# ── Tool Material Taylor Constants ─────────────────────────────────────────
-# Source: standard machining handbooks (Boothroyd, Kalpakjian)
-# Format: (n, C) where v * T^n = C
-# C values assume workpiece = medium carbon steel baseline
-# Adjusted per workpiece grade (L/M/H) via grade multiplier
-
 TOOL_TAYLOR = {
-    'HSS':     (0.125, 70),    # High Speed Steel — slow, cheap
-    'Carbide': (0.25,  200),   # Cemented Carbide — industry standard
-    'Ceramic': (0.40,  500),   # Ceramic — high speed, brittle
-    'CBN':     (0.50,  800),   # Cubic Boron Nitride — hardened steels
+    'HSS':     (0.125, 70),
+    'Carbide': (0.25,  200),
+    'Ceramic': (0.40,  500),
+    'CBN':     (0.50,  800),
 }
 
-# Workpiece grade multiplier on C
-# H grade = harder material = shorter tool life = lower C
 GRADE_MULTIPLIER = {
     'L': 1.20,
     'M': 1.00,
     'H': 0.75,
 }
 
-# Upgrade suggestion when tool life is short
 TOOL_UPGRADE = {
     'HSS':     'Carbide',
     'Carbide': 'Ceramic',
     'Ceramic': 'CBN',
-    'CBN':     None,   # already best
+    'CBN':     None,
 }
 
 TOOL_DESCRIPTIONS = {
@@ -49,6 +40,7 @@ def taylor_tool_life(v, n=0.25, C=200):
     return round(T, 2)
 
 def generate_cutting_conditions(v_base, feed_base, depth_base, n=0.25, C=200):
+    v_aggressive = min(v_base * 1.2, 500)   #Hard cap since no tool survives >500 m/min on HSS/Carbide
     conditions = {
         'Conservative': {
             'speed (m/min)':   round(v_base * 0.8, 2),
@@ -63,10 +55,10 @@ def generate_cutting_conditions(v_base, feed_base, depth_base, n=0.25, C=200):
             'tool_life (min)': taylor_tool_life(v_base, n, C)
         },
         'Aggressive': {
-            'speed (m/min)':   round(v_base * 1.2, 2),
+            'speed (m/min)':   round(v_aggressive, 2),
             'feed (mm/rev)':   round(feed_base * 1.2, 3),
             'depth (mm)':      round(depth_base * 1.2, 2),
-            'tool_life (min)': taylor_tool_life(v_base * 1.2, n, C)
+            'tool_life (min)': taylor_tool_life(v_aggressive, n, C)
         }
     }
     return conditions
