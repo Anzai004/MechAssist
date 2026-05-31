@@ -1,3 +1,6 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import sys, os, tempfile, threading
@@ -64,11 +67,11 @@ def _fmt(val, unit=""):
     return f"{s} {unit}".strip() if unit else s
 
 RISK_COLORS = {
-    "Safe":          "#888888",
-    "Yield Risk":    "#aaaaaa",
-    "Fatigue Risk":  "#aaaaaa",
-    "Fracture Risk": "#666666",
-    "Buckling Risk": "#666666",
+    "Safe":          "#4caf50",
+    "Yield Risk":    "#ff9800",
+    "Fatigue Risk":  "#ff9800",
+    "Fracture Risk": "#f44336",
+    "Buckling Risk": "#f44336",
 }
 RISK_DESCRIPTIONS = {
     "Safe":          "Component handles this load without risk of failure.",
@@ -351,7 +354,7 @@ def warning_box(parent, warnings, suggestions):
     box.pack(fill="x",pady=(8,0))
     inner=tk.Frame(box,bg=WBG); inner.pack(fill="x",padx=12,pady=8)
     for w in warnings:
-        tk.Label(inner,text=f"!  {w}",font=FONT_S,fg=TEXT2,bg=WBG,
+        tk.Label(inner,text=f"!  {w}",font=FONT_S,fg="#ff9800",bg=WBG,
                  anchor="w",wraplength=800,justify="left").pack(fill="x",pady=(0,3))
     if suggestions:
         tk.Frame(inner,bg="#2a2a2a",height=1).pack(fill="x",pady=(4,4))
@@ -628,19 +631,19 @@ def draw_mohrs_circle(parent, sigma, tau, sy, su):
     theta=np.linspace(0,2*np.pi,500)
     ax.plot(mpa(center+R*np.cos(theta)),mpa(R*np.sin(theta)),color=TEXT,linewidth=1.4,zorder=3)
     ax.axhline(0,color=TEXT2,linewidth=0.6,alpha=0.4); ax.axvline(0,color=TEXT2,linewidth=0.6,alpha=0.4)
-    ax.axvline(mpa(sy),color="#aaaaaa",linewidth=1.2,linestyle="--",zorder=2,alpha=0.85)
-    ax.axvline(mpa(su),color="#666666",linewidth=1.2,linestyle="--",zorder=2,alpha=0.85)
+    ax.axvline(mpa(sy),color="#4caf50",linewidth=1.2,linestyle="--",zorder=2,alpha=0.85)
+    ax.axvline(mpa(su),color="#f44336",linewidth=1.2,linestyle="--",zorder=2,alpha=0.85)
     ax.plot([mpa(center),mpa(sigma)],[0,mpa(tau)],color=TEXT2,linewidth=0.8,linestyle=":",alpha=0.5)
     from matplotlib.lines import Line2D
-    p_a, =ax.plot(mpa(sigma),mpa(tau),"o",color="#e0e0e0",markersize=7,zorder=5)
-    p_c, =ax.plot(mpa(center),0,"s",color=TEXT,markersize=5,zorder=5)
-    p_s1,=ax.plot(mpa(s1),0,"^",color="#aaaaaa",markersize=6,zorder=5)
-    p_s2,=ax.plot(mpa(s2),0,"v",color="#aaaaaa",markersize=6,zorder=5)
-    p_tm,=ax.plot(mpa(center),mpa(R),"D",color=ACCENT2,markersize=5,zorder=5)
+    p_a, =ax.plot(mpa(sigma),mpa(tau),"o",color="#58a6ff",markersize=7,zorder=5)
+    p_c, =ax.plot(mpa(center),0,"s",color="#e8e8e8",markersize=5,zorder=5)
+    p_s1,=ax.plot(mpa(s1),0,"^",color="#ff9800",markersize=6,zorder=5)
+    p_s2,=ax.plot(mpa(s2),0,"v",color="#ff9800",markersize=6,zorder=5)
+    p_tm,=ax.plot(mpa(center),mpa(R),"D",color="#cc55ff",markersize=5,zorder=5)
     prec=4
     ax.legend([p_a,p_c,p_s1,p_s2,p_tm,
-               Line2D([0],[0],color="#aaaaaa",linewidth=1.2,linestyle="--"),
-               Line2D([0],[0],color="#666666",linewidth=1.2,linestyle="--")],
+               Line2D([0],[0],color="#4caf50",linewidth=1.2,linestyle="--"),
+               Line2D([0],[0],color="#f44336",linewidth=1.2,linestyle="--")],
               [f"A ({mpa(sigma):.{prec}g}, {mpa(tau):.{prec}g}) MPa",
                f"Centre = {mpa(center):.{prec}g} MPa",f"s1 = {mpa(s1):.{prec}g} MPa",
                f"s2 = {mpa(s2):.{prec}g} MPa",f"t_max = {mpa(R):.{prec}g} MPa",
@@ -689,7 +692,7 @@ def draw_tool_life_curve(parent, v_base, n, C):
     ax=fig.add_subplot(111,facecolor=BG3)
     fig.subplots_adjust(left=0.13,right=0.97,top=0.88,bottom=0.18)
     ax.plot(speeds,lives,color=ACCENT2,linewidth=1.6,zorder=3)
-    mc={"Conservative":"#cccccc","Balanced":"#999999","Aggressive":"#555555"}
+    mc={"Conservative":"#4caf50","Balanced":"#ff9800","Aggressive":"#f44336"}
     for label,fac in [("Conservative",0.8),("Balanced",1.0),("Aggressive",1.2)]:
         v_pt=v_base*fac; t_pt=min((C/v_pt)**(1/n),10000)
         ax.axvline(v_pt,color=mc[label],linewidth=1.0,linestyle="--",alpha=0.85,zorder=2)
@@ -799,8 +802,8 @@ class LogPanel(tk.Frame):
         sb.config(command=self._txt.yview)
         self._txt.pack(side="left",fill="both",expand=True); sb.pack(side="right",fill="y")
         self._txt.tag_config("ts",foreground=TEXT2); self._txt.tag_config("info",foreground=TEXT)
-        self._txt.tag_config("busy",foreground="#888888"); self._txt.tag_config("success",foreground=ACCENT2)
-        self._txt.tag_config("error",foreground="#555555"); self._txt.tag_config("ready",foreground=TEXT)
+        self._txt.tag_config("busy",foreground="#ff9800"); self._txt.tag_config("success",foreground="#4caf50")
+        self._txt.tag_config("error",foreground="#f44336"); self._txt.tag_config("ready",foreground=TEXT)
     def log(self, msg, busy=False):
         from datetime import datetime; ts=datetime.now().strftime("%H:%M:%S")
         self._entries.append((ts,msg))
@@ -830,7 +833,7 @@ class MechAssist(tk.Tk):
         self.configure(bg=BG); self.resizable(True,True)
         self._mohr_png=None; self._toollife_png=None
         self._unit_var=tk.StringVar(value=UNIT_SYSTEMS[0])
-        self._api_key_var=tk.StringVar(value="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")
+        self._api_key_var=tk.StringVar(value=os.getenv("GROQ_API_KEY", ""))
         self._m1_ai_card=self._m2_ai_card=self._m3_ai_card=None
         self._prec_var=tk.StringVar(value="4 sig.fig")
         self._prec_var.trace_add("write",self._on_prec_change)
@@ -1169,6 +1172,7 @@ class MechAssist(tk.Tk):
         self.set_status("Running Module 1 \u2014 K-Means Material Clustering...",busy=True)
         try: results=recommend_materials(req_sy_mpa,ro,a5)
         except Exception as ex:
+            import traceback; traceback.print_exc()
             messagebox.showerror("Error",str(ex)); self.set_status("Module 1 Failed."); return
 
         if not results:
@@ -1624,7 +1628,7 @@ class MechAssist(tk.Tk):
         ratio=result["Stress Ratio (\u03c3_vm/Sy)"]
         sf=sy/vm if vm>0 else float("inf"); sf_pass=sf>=sf_target; allow_vm=sy/sf_target
         sf_label="SF Check: PASS" if sf_pass else "SF Check: FAIL"
-        sf_color="#666666" if sf_pass else "#333333"
+        sf_color="#4caf50" if sf_pass else "#f44336"
         sl=_stress_label(self._us)
         br=tk.Frame(self.m2_result_frame,bg=BG2); br.pack(fill="x",pady=(0,4))
         tk.Label(br,text=risk,font=("Segoe UI",13,"bold"),fg=BG2,bg=color,padx=16,pady=8).pack(side="left")
@@ -1647,7 +1651,7 @@ class MechAssist(tk.Tk):
             mg.columnconfigure(i,weight=1)
             tk.Label(col,text=lbl,font=FONT_S,fg=TEXT2,bg=BG3,anchor="w").pack(fill="x",padx=8,pady=(6,0))
             tk.Label(col,text=val,font=FONT_B,fg=TEXT,bg=BG3,anchor="w").pack(fill="x",padx=8,pady=(0,6))
-        sf_c=TEXT if sf>=2 else TEXT2 if sf>=1 else "#555555"
+        sf_c="#4caf50" if sf>=sf_target else "#ff9800" if sf>=1 else "#f44336"
         sf_f=tk.Frame(self.m2_result_frame,bg=BG2); sf_f.pack(fill="x",pady=(8,0))
         tk.Label(sf_f,text=f"Safety Factor (Sy / s_vm): {sf_str}  |  target {sf_target:.{_p()}g}",font=FONT_B,fg=sf_c,bg=BG2).pack(anchor="w")
         if not sf_pass:
